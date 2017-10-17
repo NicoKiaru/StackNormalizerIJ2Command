@@ -1,3 +1,12 @@
+/*
+* Original code by Joachim Walter https://imagej.nih.gov/ij/plugins/normalizer.html Stack_Normalizer.java
+* Translated in a groovy IJ2 command by Nicolas Chiaruttini
+* 
+* The Stack_Normalizer recalculates the grey levels of the stack, so that the minimum and maximum grey level after normalization are equal to the specified values.
+* The minimum and maximum grey levels are determined in the whole stack and not just in one plane. For RGB images all channels are normalized to the same min/max values.
+* 
+*/
+
 import ij.ImageStack
 import ij.ImagePlus
 import ij.process.ImageProcessor
