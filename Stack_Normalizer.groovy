@@ -13,7 +13,12 @@ import ij.process.StackStatistics
 #@StatusService ss
 #@LogService ls
 
-normalizeStack(myImage)
+if (myImage.getBitDepth()==24) {
+  normalizeColorStack(myImage);
+} else {
+  normalizeStack(myImage)
+} 
+myImage.getProcessor().resetMinAndMax()
 myImage.updateAndRepaintWindow()
 
 	void normalizeStack(ImagePlus imp) {
