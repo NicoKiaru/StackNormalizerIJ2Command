@@ -1,41 +1,22 @@
-import ij.*;
-import ij.plugin.*;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
+import ij.ImageStack
+import ij.ImagePlus
+import ij.process.ImageProcessor
+import ij.gui.Roi
+import java.awt.Rectangle
+import ij.process.ImageStatistics
+import ij.process.StackStatistics
 
-/* J. Walter 2002-01-28 */
+#@ImagePlus(label="Image to be normalized", description="your image") myImage
+#@Double (label="min value") newMin
+#@Double (label="max value") newMax
 
-/** The Stack_Normalizer recalculates the grey levels of the stack, so that the minimum and maximum grey level after normalization are equal to the specified values.
-The minimum and maximum grey levels are determined in the whole stack and not just in one plane. For RGB images all channels are normalized to the same min/max values. */
-public class Stack_Normalizer implements PlugIn {
-    static double newMin = 0.0;
-    static double newMax = 255.0;
+#@StatusService ss
+#@LogService ls
 
-    public void run(String arg) {
-        ImagePlus imp = IJ.getImage();
-        GenericDialog gd = new GenericDialog("Normalize to:", IJ.getInstance());
-        int bitDepth = imp.getBitDepth();
-        int digits = bitDepth==32?2:0;
-        gd.addNumericField("Minimum", newMin, digits);
-        gd.addNumericField("Maximum", newMax, digits);
-        gd.showDialog();
-        if (gd.wasCanceled()) return;
-        if (gd.invalidNumber()) {
-            IJ.showMessage("Error", "Invalid input Number");
-            return;
-        }
-        newMin = gd.getNextNumber();
-        newMax = gd.getNextNumber();
-        if (bitDepth==24)
-            normalizeColorStack(imp);
-        else
-            normalizeStack(imp);
-        imp.getProcessor().resetMinAndMax();
-        imp.updateAndRepaintWindow();
-    }
+normalizeStack(myImage)
+myImage.updateAndRepaintWindow()
 
-    void normalizeStack(ImagePlus imp) {
+	void normalizeStack(ImagePlus imp) {
         ImageStack stack = imp.getStack();
         int size = stack.getSize();
         double v;
@@ -59,19 +40,19 @@ public class Stack_Normalizer implements PlugIn {
             rw = width;
             rh = height;
         }
-
-        IJ.showStatus("Finding min and max");
+     
+        ss.showStatus("Finding min and max");
         ImageStatistics stats = new StackStatistics(imp);
         double roiMin = stats.min;
         double roiMax = stats.max;
         if (roiMax<=roiMin) roiMax = roiMin+1;
         double scale = (newMax-newMin) / (roiMax-roiMin);
         double offset = (newMin*roiMax - newMax*roiMin) / (roiMax-roiMin);
-        IJ.log(roiMin+"  "+roiMax+"  "+scale+"  "+offset);
+        ls.log(roiMin+"  "+roiMax+"  "+scale+"  "+offset);
 
         for (int slice=1; slice<=size; slice++) {
-            IJ.showStatus("Normalizing: "+slice+"/"+size);
-            IJ.showProgress(slice, size);
+            ss.showStatus("Normalizing: "+slice+"/"+size);
+            ss.showProgress(slice,size);
             ip = stack.getProcessor(slice);
             for (int y=0; y<height; y++) {
                 int i = y * width + rx;
@@ -121,8 +102,8 @@ public class Stack_Normalizer implements PlugIn {
         int roiMaxB = -Integer.MAX_VALUE;
 
         for (int slice=1; slice<=size; slice++) {
-            IJ.showStatus("MinMax: "+slice+"/"+size);
-            IJ.showProgress(slice, size);
+            ss.showStatus("MinMax: "+slice+"/"+size);
+			ss.showProgress(slice, size);            
             ip = stack.getProcessor(slice);
             if (mask == null) {
                 for (int y=ry; y<(ry+rh); y++) {
@@ -142,7 +123,9 @@ public class Stack_Normalizer implements PlugIn {
                     }
                 }
             } else {
-                for (int y=ry, ym = 0; y<(ry+rh); y++, ym++) {
+            	
+            	ym = 0;
+                for (int y=ry; y<(ry+rh); y++) {
                     int i = y * width + rx;
                     int im = ym * rw;
                     for (int x=rx; x<(rx+rw); x++) {
@@ -160,6 +143,7 @@ public class Stack_Normalizer implements PlugIn {
                         }
                         i++; im++;
                     }
+                    ym++;
                 }
             }
 
@@ -178,8 +162,8 @@ public class Stack_Normalizer implements PlugIn {
         double offsetB = (newMin*roiMaxB - newMax*roiMinB) / (roiMaxB - roiMinB);
 
         for (int slice=1; slice<=size; slice++) {
-            IJ.showStatus("MinMax: "+slice+"/"+size);
-            IJ.showProgress(slice, size);
+            ss.showStatus("MinMax: "+slice+"/"+size);
+            ss.showProgress(slice, size);
             ip = stack.getProcessor(slice);
             for (int y=ry; y<(ry+rh); y++) {
                 int i = y * width + rx;
@@ -205,7 +189,4 @@ public class Stack_Normalizer implements PlugIn {
             }
 
         }
-
     }
-
-}
